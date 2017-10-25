@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
 */
 
-namespace DevTools;
+namespace PSMDevTools;
 
-use DevTools\commands\ExtractPluginCommand;
-use DevTools\commands\GeneratePluginCommand;
+use PSMDevTools\commands\ExtractPluginCommand;
+use PSMDevTools\commands\GeneratePluginCommand;
 use FolderPluginLoader\FolderPluginLoader;
 use pocketmine\command\Command;
 use pocketmine\command\CommandExecutor;
@@ -41,12 +41,22 @@ class DevTools extends PluginBase implements CommandExecutor{
 	}
 
 	public function onEnable(){
+		if($this->getServer()->getPluginManager()->getPlugin("PSMCore") !== null){
+			\Ad5001\PSMCore\API::addPluginSpecificAction($this, "Generate server phar", "makeserver");
+			\Ad5001\PSMCore\API::addPluginAction("Extract plugin", "extractplugin %p");
+			\Ad5001\PSMCore\API::addPluginAction("Build plugin", "makeplugin %p");
+			\Ad5001\PSMCore\API::addPlayerAction("Check permissions", "checkperm %p");
+		} else {
+			$this->getLogger()->warning("This specific version of devtools is intended to be working with PSM. ");
+			$this->getLogger()->warning("You can download PSM at https://psm.mcpe.fun. ");
+			$this->setEnabled(false);
+		}
 		@mkdir($this->getDataFolder());
 
 		$this->getServer()->getPluginManager()->registerInterface("FolderPluginLoader\\FolderPluginLoader");
 		$this->getServer()->getPluginManager()->loadPlugins($this->getServer()->getPluginPath(), ["FolderPluginLoader\\FolderPluginLoader"]);
 		$this->getLogger()->info("Registered folder plugin loader");
-		$this->getServer()->enablePlugins(PluginLoadOrder::STARTUP);
+		$this->getServer()->enablePlugins(PluginLoadOrder::POSTWORLD);
 
 	}
 
@@ -60,7 +70,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 				}
 			case "makeserver":
 				return $this->makeServerCommand($sender, $command, $label, $args);
-			case "checkperm":
+			case "checkperm": // TODO: HTML Browser rendering
 				return $this->permissionCheckCommand($sender, $command, $label, $args);
 			default:
 				return false;
@@ -138,7 +148,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 			}
 		}
 		$phar->stopBuffering();
-		$sender->sendMessage("Folder plugin loader has been created on " . $pharPath);
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Folder plugin loader has been created on " . $pharPath, ["Open folder"], "openpath $pharPath");
 		return true;
 	}
 
@@ -169,7 +179,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 			"creationDate" => time()
 		];
 
-		if($description->getName() === "DevTools"){
+		if($description->getName() === "PSMDevTools"){
 			$stub = '<?php require("phar://". __FILE__ ."/src/DevTools/ConsoleScript.php"); __HALT_COMPILER();';
 		}else{
 			$stub = '<?php echo "PocketMine-MP plugin ' . $description->getName() . ' v' . $description->getVersion() . '\nThis file has been generated using DevTools v' . $this->getDescription()->getVersion() . ' at ' . date("r") . '\n----------------\n";if(extension_loaded("phar")){$phar = new \Phar(__FILE__);foreach($phar->getMetadata() as $key => $value){echo ucfirst($key).": ".(is_array($value) ? implode(", ", $value):$value)."\n";}} __HALT_COMPILER();';
@@ -182,7 +192,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 
 		$this->buildPhar($sender, $pharPath, $filePath, [], $metadata, $stub, \Phar::SHA1);
 
-		$sender->sendMessage("Phar plugin " . $description->getName() . " v" . $description->getVersion() . " has been created on " . $pharPath);
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Phar plugin " . $description->getName() . " v" . $description->getVersion() . " has been created on " . $pharPath, ["Open folder"], "openpath $pharPath");
 		return true;
 	}
 
@@ -211,8 +221,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 
 		$this->buildPhar($sender, $pharPath, $filePath, ['src', 'vendor'], $metadata, $stub, \Phar::SHA1);
 
-		$sender->sendMessage($server->getName() . " " . $server->getPocketMineVersion() . " Phar file has been created on " . $pharPath);
-
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", $server->getName() . " " . $server->getPocketMineVersion() . " Phar file has been created on " . $pharPath, ["Open folder"], "openfolder $pharPath");
 		return true;
 	}
 

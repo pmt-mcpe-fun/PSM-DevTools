@@ -15,10 +15,10 @@
  * GNU General Public License for more details.
 */
 
-namespace DevTools\commands;
+namespace PSMDevTools\commands;
 
 
-use DevTools\DevTools;
+use PSMDevTools\DevTools;
 use pocketmine\command\CommandSender;
 use pocketmine\utils\TextFormat;
 

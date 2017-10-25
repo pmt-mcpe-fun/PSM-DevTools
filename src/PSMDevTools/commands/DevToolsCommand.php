@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
 */
 
-namespace DevTools\commands;
+namespace PSMDevTools\commands;
 
-use DevTools\DevTools;
+use PSMDevTools\DevTools;
 use pocketmine\command\Command;
 use pocketmine\command\PluginIdentifiableCommand;
 use pocketmine\plugin\Plugin;

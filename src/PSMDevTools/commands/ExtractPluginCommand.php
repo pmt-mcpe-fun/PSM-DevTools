@@ -15,9 +15,9 @@
  * GNU General Public License for more details.
 */
 
-namespace DevTools\commands;
+namespace PSMDevTools\commands;
 
-use DevTools\DevTools;
+use PSMDevTools\DevTools;
 use pocketmine\command\CommandSender;
 use pocketmine\plugin\PharPluginLoader;
 use pocketmine\plugin\Plugin;
@@ -76,7 +76,7 @@ class ExtractPluginCommand extends DevToolsCommand{
 			@mkdir(dirname($folderPath . str_replace($pharPath, "", $path)), 0755, true);
 			file_put_contents($folderPath . str_replace($pharPath, "", $path), file_get_contents($path));
 		}
-		$sender->sendMessage("Source plugin " . $description->getName() . " v" . $description->getVersion() . " has been created on " . $folderPath);
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Source plugin " . $description->getName() . " v" . $description->getVersion() . " has been created on " . $folderPath, ["Open folder"], "openfolder $folderPath");
 		return true;
 	}
 }

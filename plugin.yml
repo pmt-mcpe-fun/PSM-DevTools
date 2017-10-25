@@ -1,11 +1,11 @@
-name: DevTools
-main: DevTools\DevTools
+name: PSMDevTools
+main: PSMDevTools\DevTools
 version: 1.12.5
 api: [3.0.0-ALPHA7, 3.0.0-ALPHA8, 3.0.0-ALPHA9]
-load: STARTUP
-author: PocketMine Team
-description: Helps develop and distribute PocketMine-MP plugins
-website: https://github.com/PocketMine/DevTools
+load: POSTWORLD
+authors: [PocketMine Team, PMT Team]
+description: Helps develop and distribute PocketMine-MP plugins. Modification to implement PSM api to help develop and compile plugins.
+website: https://github.com/pmt-mcpe-fun/PSM-DevTools
 commands:
  makeserver:
   description: Creates a PocketMine-MP Phar
@@ -48,3 +48,4 @@ permissions:
       default: op
       description: "Allows the user to generate skeleton files for a plugin"
 
+psmimplements: true
