@@ -30,16 +30,27 @@ use pocketmine\plugin\Plugin;
 use pocketmine\plugin\PluginBase;
 use pocketmine\plugin\PluginLoadOrder;
 use pocketmine\Server;
+use pocketmine\utils\Utils;
 use pocketmine\utils\TextFormat;
 
 class DevTools extends PluginBase implements CommandExecutor{
 
+	/**
+	 * When the plugin loads
+	 *
+	 * @return void
+	 */
 	public function onLoad(){
 		$map = $this->getServer()->getCommandMap();
 		$map->register("devtools", new ExtractPluginCommand($this));
 		$map->register("devtools", new GeneratePluginCommand($this));
 	}
 
+	/**
+	 * When the plugin gets enabled
+	 *
+	 * @return void
+	 */
 	public function onEnable(){
 		if($this->getServer()->getPluginManager()->getPlugin("PSMCore") !== null){
 			\Ad5001\PSMCore\API::addPluginSpecificAction($this, "Generate server phar", "makeserver");
@@ -60,6 +71,15 @@ class DevTools extends PluginBase implements CommandExecutor{
 
 	}
 
+	/**
+	 * When a command is executed
+	 *
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param array $args
+	 * @return bool
+	 */
 	public function onCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		switch($command->getName()){
 			case "makeplugin":
@@ -72,11 +92,33 @@ class DevTools extends PluginBase implements CommandExecutor{
 				return $this->makeServerCommand($sender, $command, $label, $args);
 			case "checkperm": // TODO: HTML Browser rendering
 				return $this->permissionCheckCommand($sender, $command, $label, $args);
+			case "openfolder":
+				if(!isset($args[0])) return false;
+				switch(Utils::getOS()){
+					case "darwin":
+					exec("open " . $args[0]);
+					break;
+					case "linux":
+					exec("xdg-open " . $args[0]);
+					break;
+					case "windows":
+					exec("explorer " . $args[0]);
+					break;
+				}
 			default:
 				return false;
 		}
 	}
 
+	/**
+	 * Checks if a player has a permission.
+	 *
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param array $args
+	 * @return bool
+	 */
 	private function permissionCheckCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		$target = $sender;
 		if(!isset($args[0])){
@@ -92,7 +134,7 @@ class DevTools extends PluginBase implements CommandExecutor{
 		}
 
 		if($target !== $sender and !$sender->hasPermission("devtools.command.checkperm.other")){
-			$sender->sendMessage(TextFormat::RED . "You do not have permissions to check other players.");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "You do not have permissions to check other players.");
 			return true;
 		}else{
 			$sender->sendMessage(TextFormat::GREEN . "---- " . TextFormat::WHITE . "Permission node " . $node . TextFormat::GREEN . " ----");
@@ -115,10 +157,19 @@ class DevTools extends PluginBase implements CommandExecutor{
 		}
 	}
 
+	/**
+	 * Command to build a FolderPluginLoader phar.
+	 *
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param array $args
+	 * @return bool
+	 */
 	private function makePluginLoader(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		$pharPath = $this->getDataFolder() . DIRECTORY_SEPARATOR . "FolderPluginLoader.phar";
 		if(file_exists($pharPath)){
-			$sender->sendMessage("Phar plugin already exists, overwriting...");
+			// $sender->sendMessage("Phar plugin already exists, overwriting...");
 			\Phar::unlinkArchive($pharPath);
 		}
 		$phar = new \Phar($pharPath);
@@ -152,16 +203,25 @@ class DevTools extends PluginBase implements CommandExecutor{
 		return true;
 	}
 
+	/**
+	 * Command to build a plugin phar
+	 *
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param array $args
+	 * @return bool
+	 */
 	private function makePluginCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		$pluginName = trim(implode(" ", $args));
 		if($pluginName === "" or !(($plugin = Server::getInstance()->getPluginManager()->getPlugin($pluginName)) instanceof Plugin)){
-			$sender->sendMessage(TextFormat::RED . "Invalid plugin name, check the name case.");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Invalid plugin name, check the name case.");
 			return true;
 		}
 		$description = $plugin->getDescription();
 
 		if(!($plugin->getPluginLoader() instanceof FolderPluginLoader)){
-			$sender->sendMessage(TextFormat::RED . "Plugin " . $description->getName() . " is not in folder structure.");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Plugin " . $description->getName() . " is not in folder structure.");
 			return true;
 		}
 
@@ -192,13 +252,23 @@ class DevTools extends PluginBase implements CommandExecutor{
 
 		$this->buildPhar($sender, $pharPath, $filePath, [], $metadata, $stub, \Phar::SHA1);
 
-		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Phar plugin " . $description->getName() . " v" . $description->getVersion() . " has been created on " . $pharPath, ["Open folder"], "openpath $pharPath");
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Phar plugin " . $description->getName() . " v" . 
+		$description->getVersion() . " has been created on " . $pharPath, ["Open folder"], "openfolder $pharPath");
 		return true;
 	}
 
+	/**
+	 * Build server's phar
+	 *
+	 * @param CommandSender $sender
+	 * @param Command $command
+	 * @param string $label
+	 * @param array $args
+	 * @return bool
+	 */
 	private function makeServerCommand(CommandSender $sender, Command $command, string $label, array $args) : bool{
 		if(strpos(\pocketmine\PATH, "phar://") === 0){
-			$sender->sendMessage(TextFormat::RED . "This command can only be used on a server running from source code");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Makeserver can only be used on a server running from source code");
 			return true;
 		}
 
@@ -220,8 +290,9 @@ class DevTools extends PluginBase implements CommandExecutor{
 		$filePath = rtrim(str_replace("\\", "/", $filePath), "/") . "/";
 
 		$this->buildPhar($sender, $pharPath, $filePath, ['src', 'vendor'], $metadata, $stub, \Phar::SHA1);
-
-		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", $server->getName() . " " . $server->getPocketMineVersion() . " Phar file has been created on " . $pharPath, ["Open folder"], "openfolder $pharPath");
+		
+		\Ad5001\PSMCore\API::displayNotification("PSMDevTools", $server->getName() . " " . $server->getPocketMineVersion() . 
+		" phar file  has been created at " . $pharPath, ["Open folder"], "openfolder $pharPath");
 		return true;
 	}
 
@@ -229,14 +300,28 @@ class DevTools extends PluginBase implements CommandExecutor{
 		return array_map(function(string $str) use ($delim) : string{ return preg_quote($str, $delim); }, $strings);
 	}
 
+	/**
+	 * Builds a phar
+	 *
+	 * @param CommandSender $sender
+	 * @param string $pharPath
+	 * @param string $basePath
+	 * @param array $includedPaths
+	 * @param array $metadata
+	 * @param string $stub
+	 * @param int $signatureAlgo
+	 * @return void
+	 */
 	private function buildPhar(CommandSender $sender, string $pharPath, string $basePath, array $includedPaths, array $metadata, string $stub, int $signatureAlgo = \Phar::SHA1){
 		if(file_exists($pharPath)){
 			$sender->sendMessage("Phar file already exists, overwriting...");
-			\Phar::unlinkArchive($pharPath);
+			try {
+				\Phar::unlinkArchive($pharPath);
+			} catch(Throwable $e) {
+				unlink($pharPath);
+			}
 		}
-
-		$sender->sendMessage("[DevTools] Adding files...");
-
+		
 		$start = microtime(true);
 		$phar = new \Phar($pharPath);
 		$phar->setMetadata($metadata);
@@ -257,19 +342,13 @@ class DevTools extends PluginBase implements CommandExecutor{
 		);
 
 		$count = count($phar->buildFromDirectory($basePath, $regex));
-		$sender->sendMessage("[DevTools] Added $count files");
-
-		$sender->sendMessage("[DevTools] Checking for compressible files...");
 		foreach($phar as $file => $finfo){
 			/** @var \PharFileInfo $finfo */
 			if($finfo->getSize() > (1024 * 512)){
-				$sender->sendMessage("[DevTools] Compressing " . $finfo->getFilename());
 				$finfo->compress(\Phar::GZ);
 			}
 		}
 		$phar->stopBuffering();
-
-		$sender->sendMessage("[DevTools] Done in " . round(microtime(true) - $start, 3) . "s");
 	}
 
 }

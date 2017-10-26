@@ -19,7 +19,18 @@ commands:
   description: Checks a permission value for the current sender, or a player
   usage: "/checkperm <node> [playerName]"
   permission: "devtools.command.checkperm;devtools.command.checkperm.other"
+ openfolder:
+  description: "§4Internal"
+  usage: "§4Internal command"
+  permission: "psmdevtools.openfolder"
 permissions:
+ psmdevtools:
+  default: false
+  description: "§4Internal"
+  children:
+   devtools.openfolder:
+    default: false
+    description: "§4Internal"
  devtools:
   default: op
   description: "Allows using all the DevTools things"

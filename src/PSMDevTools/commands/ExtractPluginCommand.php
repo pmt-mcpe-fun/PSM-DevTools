@@ -43,19 +43,19 @@ class ExtractPluginCommand extends DevToolsCommand{
 		}
 
 		if(count($args) === 0){
-			$sender->sendMessage(TextFormat::RED . "Usage: " . $this->usageMessage);
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Usage: " . $this->usageMessage);
 			return true;
 		}
 
 		$pluginName = trim(implode(" ", $args));
 		if($pluginName === "" or !(($plugin = Server::getInstance()->getPluginManager()->getPlugin($pluginName)) instanceof Plugin)){
-			$sender->sendMessage(TextFormat::RED . "Invalid plugin name, check the name case.");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Invalid plugin name, check the name case.");
 			return true;
 		}
 		$description = $plugin->getDescription();
 
 		if(!($plugin->getPluginLoader() instanceof PharPluginLoader)){
-			$sender->sendMessage(TextFormat::RED . "Plugin " . $description->getName() . " is not in Phar structure.");
+			\Ad5001\PSMCore\API::displayNotification("PSMDevTools", "Plugin " . $description->getName() . " is not in Phar structure.");
 			return true;
 		}
 
